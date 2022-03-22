@@ -69,3 +69,49 @@ FROM region_to_forest rf
 WHERE year = 2016
 AND rf.country_name = 'World'
 LIMIT 1;
+
+SELECT region,
+ Round(((Sum(forest_area_sqkm) / Sum(total_area_sq_mi*2.59))*100)::Numeric, 2) AS
+percent_forest
+FROM region_to_forest
+WHERE YEAR = 2016
+GROUP BY region
+ORDER BY percent_forest DESC
+
+/* 2. b. What was the percent forest of the entire world in 1990? Which region had the HIGHEST percent forest in 1990, and which had the LOWEST, to 2 decimal places?  */
+
+SELECT Round(100.0*(rf.forest_area_sqkm / 
+  (rf.total_area_sq_mi * 2.59))::Numeric, 2) AS percentage
+FROM region_to_forest rf
+WHERE year = 1990
+AND rf.country_name = 'World'
+LIMIT 1;
+
+SELECT region,
+ Round(((Sum(forest_area_sqkm) / Sum(total_area_sq_mi*2.59))*100)::Numeric, 2) AS
+percent_forest
+FROM region_to_forest
+WHERE YEAR = 1990
+GROUP BY region
+ORDER BY percent_forest DESC
+
+
+/* 2. c. Based on the table you created, which regions of the world DECREASED in forest area from 1990 to 2016?  */
+
+SELECT ROUND(CAST((region_forest_1990/ region_area_1990) * 100 AS NUMERIC), 2) 
+  AS forest_percent_1990,
+  ROUND(CAST((region_forest_2016 / region_area_2016) * 100 AS NUMERIC), 2) 
+  AS forest_percent_2016,
+  region  
+FROM (SELECT SUM(a.forest_area_sqkm) region_forest_1990,
+  SUM(a.total_area_sq_mi * 2.59) region_area_1990, a.region,
+  SUM(b.forest_area_sqkm) region_forest_2016,
+  SUM(b.total_area_sq_mi * 2.59)  region_area_2016
+FROM  region_to_forest a, region_to_forest b
+WHERE  a.year = '1990'
+AND a.country_name != 'World'
+AND b.year = '2016'
+AND b.country_name != 'World'
+AND a.region = b.region
+GROUP  BY a.region) region_percent 
+ORDER  BY forest_percent_1990 DESC;
